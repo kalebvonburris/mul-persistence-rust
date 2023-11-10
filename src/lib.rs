@@ -51,7 +51,8 @@ impl Display for MPDigits {
     }
 }
 
-fn calculate_permutations(
+/// Recursive function for generating permutations of numbers of a given length.
+fn calculate_permutations_recurse(
     permutations: &mut Vec<MPDigits>,
     permutation: &mut MPDigits,
     k: usize,
@@ -75,7 +76,7 @@ fn calculate_permutations(
     for i in 0..n {
         let mut new_permutation = permutation.clone();
         new_permutation.digits[usable_digits[i]] += 1;
-        calculate_permutations(
+        calculate_permutations_recurse(
             permutations,
             &mut new_permutation,
             k - 1,
@@ -85,8 +86,7 @@ fn calculate_permutations(
     }
 }
 
-/// Returns all permutations of every
-/// number with a given number of digits.
+/// The wrapper function that returns all permutations of every number with a given number of digits for MP.
 #[inline(always)]
 pub fn create_permutations(length: usize) -> Vec<MPDigits> {
     let mut permutations = Vec::new();
@@ -95,7 +95,7 @@ pub fn create_permutations(length: usize) -> Vec<MPDigits> {
 
     let mut permutation = MPDigits::default();
 
-    calculate_permutations(
+    calculate_permutations_recurse(
         &mut permutations,
         &mut permutation,
         length,
