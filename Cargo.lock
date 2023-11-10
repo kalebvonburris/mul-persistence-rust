@@ -427,7 +427,6 @@ dependencies = [
  "criterion",
  "num-bigint",
  "num-traits",
- "num_cpus",
  "rayon",
  "tokio",
 ]

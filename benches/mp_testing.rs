@@ -11,7 +11,7 @@ fn bench_new_solution(c: &mut Criterion) {
     group.measurement_time(Duration::from_secs(10));
 
     group.bench_function(
-        format!("Check digits of length 2 - 7 length without tokio concurrency"),
+        format!("Check digits of length 2 - 7 without tokio concurrency"),
         move |b| {
             b.to_async(Runtime::new().unwrap()).iter(|| async {
                 for i in 2..7 {
@@ -23,7 +23,7 @@ fn bench_new_solution(c: &mut Criterion) {
     );
 
     group.bench_function(
-        format!("Check digits of length 2 - 7 length with tokio concurrency"),
+        format!("Check digits of length 2 - 7 with tokio concurrency"),
         move |b| {
             b.to_async(Runtime::new().unwrap()).iter(|| async move {
                 let mut future = tokio::spawn(async { create_permutations(2) });
