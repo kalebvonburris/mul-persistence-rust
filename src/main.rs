@@ -1,3 +1,5 @@
+use std::{time::SystemTime, alloc::System};
+
 use mul_persistence_rust::*;
 
 #[tokio::main]
@@ -9,11 +11,14 @@ async fn main() {
     let mut highest_persistence: (MPDigits, u8) = (MPDigits::default(), 1);
     // Joinhandle for calcuating permutations concurrently with solving them
     let mut future = tokio::spawn(async { create_permutations(2) });
+    let mut permutation_time = SystemTime::now();
     loop {
         // Await new digits to calculate
         let mut permutations = future.await.unwrap();
+        let end_permutation_time = permutation_time.elapsed().unwrap().as_secs_f64();
         // Start another thread to find more permutations
         future = tokio::spawn(async move { create_permutations(len) });
+        let computation_time = SystemTime::now();
         // Remove duplicate tasks
         permutations.dedup();
         // Figure out how many permutations are left to compute
@@ -28,9 +33,10 @@ async fn main() {
         }
         // Print out the data regarding the current iteration
         println!(
-            "{}: {} for length {}. {} permutations solved.",
-            highest_persistence.0, highest_persistence.1, len, size
+            "{}: {} for length {}. {} permutations solved. {}s spent waiting on permutations, {}s spent waiting on computation.",
+            highest_persistence.0, highest_persistence.1, len, size, end_permutation_time, computation_time.elapsed().unwrap().as_secs_f64()
         );
+        permutation_time = SystemTime::now();
         // Iterate
         len += 1;
     }

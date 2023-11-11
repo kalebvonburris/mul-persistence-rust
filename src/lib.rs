@@ -51,57 +51,42 @@ impl Display for MPDigits {
     }
 }
 
-/// Recursive function for generating permutations of numbers of a given length.
-fn calculate_permutations_recurse(
-    permutations: &mut Vec<MPDigits>,
-    permutation: &mut MPDigits,
-    k: usize,
-    n: usize,
-    usable_digits: Vec<usize>,
-) {
-    // Cases where we have two 2s (4) or two 3s (9) are skipped
-    if permutation.digits[2] > 1
-    || permutation.digits[3] > 1
-    // Cases where we have a 2 and 3 (6) or 2 and 4 (8) are skipped
-    || permutation.digits[2] == 1 && (permutation.digits[3] >= 1 || permutation.digits[4] >= 1)
-    {
-        return;
-    }
-    // If we've run out of digits to append, then we've created a new permutation
-    else if k == 0 {
-        permutations.push(permutation.to_owned());
-        return;
-    }
-    // Otherwise, we create new permutations
-    for i in 0..n {
-        let mut new_permutation = permutation.clone();
-        new_permutation.digits[usable_digits[i]] += 1;
-        calculate_permutations_recurse(
-            permutations,
-            &mut new_permutation,
-            k - 1,
-            n,
-            usable_digits.to_owned(),
-        )
-    }
-}
+use std::collections::VecDeque;
 
-/// The wrapper function that returns all permutations of every number with a given number of digits for MP.
-#[inline(always)]
+/// Iterative function for generating permutations of numbers of a given length.
 pub fn create_permutations(length: usize) -> Vec<MPDigits> {
     let mut permutations = Vec::new();
-
     let usable_digits: Vec<usize> = vec![2, 3, 4, 6, 7, 8, 9];
 
-    let mut permutation = MPDigits::default();
+    // Create a queue to simulate the call stack
+    let mut stack = VecDeque::new();
 
-    calculate_permutations_recurse(
-        &mut permutations,
-        &mut permutation,
-        length,
-        usable_digits.len(),
-        usable_digits,
-    );
+    // Initialize the stack with the initial state
+    stack.push_back((MPDigits::default(), length, 0, usable_digits.clone()));
+
+    while let Some((permutation, k, i, digits)) = stack.pop_back() {
+        // Cases where we have two 2s (4) or two 3s (9) are skipped
+        if permutation.digits[2] > 1
+        || permutation.digits[3] > 1
+        // Cases where we have a 2 and 3 (6) or 2 and 4 (8) are skipped
+        || permutation.digits[2] == 1 && (permutation.digits[3] >= 1 || permutation.digits[4] >= 1)
+        {
+            continue;
+        }
+        if k == 0 {
+            // Base case: add the completed permutation to the result
+            permutations.push(permutation);
+        } else {
+            // Otherwise, generate new permutations
+            for j in i..digits.len() {
+                let mut new_permutation = permutation.clone();
+                new_permutation.digits[digits[j]] += 1;
+
+                // Push the new state onto the stack
+                stack.push_back((new_permutation, k - 1, j, digits.clone()));
+            }
+        }
+    }
 
     permutations
 }
