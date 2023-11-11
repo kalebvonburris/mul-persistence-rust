@@ -51,7 +51,72 @@ impl Display for MPDigits {
     }
 }
 
+pub struct PermutationQueue {
+    pub stack: VecDeque<(MPDigits, usize, usize)>,
+    pub usable_digits: Vec<usize>,
+    pub length: usize,
+}
+
 use std::collections::VecDeque;
+
+impl PermutationQueue {
+    /// Creates a new PermutationQueue with the default stack and length (2) given a set of usable digits.
+    pub fn new(usable_digits: Vec<usize>) -> Self {
+        let mut stack = VecDeque::new();
+        stack.push_back((MPDigits::default(), 2_usize, 0_usize));
+        Self {
+            stack,
+            usable_digits,
+            length: 2,
+        }
+    }
+
+    /// Iterative function for generating permutations of numbers of a given length.
+    pub fn yield_permutations(&mut self, num_permutations: usize) -> Vec<MPDigits> {
+        let mut permutations: Vec<MPDigits> = Vec::with_capacity(num_permutations);
+
+        let mut permutations_found: usize = 0;
+
+        while let Some((permutation, k, i)) = self.stack.pop_front() {
+            // Cases where we have two 2s (4) or two 3s (9) are skipped
+            if permutation.digits[2] > 1
+            || permutation.digits[3] > 1
+            // Cases where we have a 2 and 3 (6) or 2 and 4 (8) are skipped
+            || permutation.digits[2] == 1 && (permutation.digits[3] >= 1 || permutation.digits[4] >= 1)
+            {
+                continue;
+            }
+            if k == 0 {
+                // Base case: add the completed permutation to the result
+                permutations.push(permutation);
+                permutations_found += 1;
+                if permutations_found == num_permutations {
+                    return permutations;
+                }
+            } else {
+                // Otherwise, generate new permutations
+                for j in i..self.usable_digits.len() {
+                    let mut new_permutation = permutation.clone();
+                    new_permutation.digits[self.usable_digits[j]] += 1;
+
+                    // Push the new state onto the stack
+                    self.stack.push_back((new_permutation, k - 1, j));
+                }
+            }
+        }
+
+        // Wrap to next length if we've exhausted all options
+        // This is recursive, but should only cause 1-2 recursive calls on most inputs.
+        if permutations.len() < num_permutations {
+            self.stack
+                .push_back((MPDigits::default(), self.length + 1, 0_usize));
+            self.length += 1;
+            permutations.extend(self.yield_permutations(num_permutations - permutations.len()));
+        }
+
+        permutations
+    }
+}
 
 /// Iterative function for generating permutations of numbers of a given length.
 pub fn create_permutations(length: usize) -> Vec<MPDigits> {
@@ -73,11 +138,12 @@ pub fn create_permutations(length: usize) -> Vec<MPDigits> {
         {
             continue;
         }
+        // Base case: add the completed permutation to the result
         if k == 0 {
-            // Base case: add the completed permutation to the result
             permutations.push(permutation);
-        } else {
-            // Otherwise, generate new permutations
+        }
+        // Otherwise, generate new permutations
+        else {
             for j in i..digits.len() {
                 let mut new_permutation = permutation.clone();
                 new_permutation.digits[digits[j]] += 1;
