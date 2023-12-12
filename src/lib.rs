@@ -63,11 +63,11 @@ impl PermutationQueue {
     /// Creates a new PermutationQueue with the default stack and length (2) given a set of usable digits.
     pub fn new(usable_digits: Vec<usize>) -> Self {
         let mut stack = VecDeque::new();
-        stack.push_back((MPDigits::default(), 2_usize, 0_usize));
+        stack.push_back((MPDigits::default(), 1_usize, 0_usize));
         Self {
             stack,
             usable_digits,
-            length: 2,
+            length: 1,
         }
     }
 

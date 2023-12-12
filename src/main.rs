@@ -1,63 +1,50 @@
-use std::time::SystemTime;
+﻿use std::collections::HashMap;
 
-use mul_persistence_rust::*;
-use tokio::sync::oneshot;
+fn count_valid_combinations(n: usize) -> usize {
+    let digits = vec![2, 3, 4, 6, 7, 8, 9];
+    let mut table: Vec<HashMap<Vec<usize>, usize>> = vec![HashMap::new(); n + 1];
 
-const DIGITS: &[usize] = &[2, 3, 4, 6, 7, 8, 9];
-const PERMUTATIONS_PER_ITERATION: usize = 10_000;
+    // Base case for n = 1
+    for &digit in &digits {
+        let mut base_case = vec![0; digits.len()];
+        base_case[digits.iter().position(|&d| d == digit).unwrap()] = 1;
+        table[1].insert(base_case, 1);
+    }
 
-#[tokio::main]
-async fn main() {
-    // Create a queue for generating new numbers to compute
-    let mut queue = PermutationQueue::new(DIGITS.to_vec());
-
-    // Numbers of length 1 are already solved
-    // Numbers of length 2 will be gathered and computed in a moment
-    let mut len = 2;
-    // Value for storing our best found solution
-    let mut highest_persistence: (MPDigits, u8) = (MPDigits::default(), 1);
-
-    let (mut sender, mut reciever) = oneshot::channel();
-
-    // Joinhandle for calcuating permutations concurrently with solving them
-    let mut future = tokio::spawn(async move {
-        // Calculate permutations
-        let permutations = queue.yield_permutations(PERMUTATIONS_PER_ITERATION);
-        let _ = sender.send((queue, permutations));
-    });
-
-    let mut length_time = SystemTime::now();
-    loop {
-        // Await new digits to calculate
-        future.await.unwrap();
-        let (mut queue, mut persistences) = reciever.try_recv().unwrap();
-        let new_length = queue.length;
-        (sender, reciever) = oneshot::channel();
-        // Start another thread to find more permutations
-        future = tokio::spawn(async move {
-            // Calculate permutations
-            let permutations = queue.yield_permutations(PERMUTATIONS_PER_ITERATION);
-            let _ = sender.send((queue, permutations));
-        });
-        // Remove duplicate tasks
-        persistences.dedup();
-        // Compute the permutations
-        let solutions = compute_persistences(persistences).await;
-        // Check if any solutions are superior to the best found before
-        for solution in solutions {
-            if solution.1 > highest_persistence.1 {
-                highest_persistence = solution.clone();
-            }
-        }
-
-        if new_length > len {
-            // Print out the data regarding the current iteration
-            println!(
-                "{}: persistence {}. Working on length {}. {} microseconds spent working on this length.",
-                highest_persistence.0, highest_persistence.1, new_length, length_time.elapsed().unwrap().as_micros()
-            );
-            len = new_length;
-            length_time = SystemTime::now();
+    // Recursive cases for n > 1
+    for length in 2..=n {
+        for combination in generate_combinations(&digits, length) {
+            let count = count_for_combination(&combination, &table, length - 1, &digits);
+            table[length].insert(combination, count);
         }
     }
+
+    // Summing up all combinations for n
+    table[n].values().sum()
+}
+
+fn generate_combinations(digits: &[i32], length: usize) -> Vec<Vec<usize>> {
+    // Generate all valid combinations of digits for a given length
+    // This function needs to be implemented to efficiently generate combinations
+    Vec::new() // Placeholder
+}
+
+fn count_for_combination(
+    combination: &[usize], 
+    table: &[HashMap<Vec<usize>, usize>], 
+    prev_length: usize, 
+    digits: &[i32]
+) -> usize {
+    // Count the number of valid combinations that lead to the current combination
+    // This function needs to be implemented to count based on previous table entries
+    0 // Placeholder
+}
+
+fn main() {
+    let max_n = 50;
+    for i in 1..(max_n + 1) {
+        let count = count_valid_combinations(i);
+        print!("({},{})", i, count);
+    }
+    println!()    
 }
